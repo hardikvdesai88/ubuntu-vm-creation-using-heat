@@ -1,0 +1,40 @@
+
+heat_template_version: 2015-10-15
+description: A base Ubuntu server
+
+resources:
+  server:
+    type: OS::Nova::Server
+    properties:
+      block_device_mapping:
+        - device_name: vda
+          delete_on_termination: true
+          volume_id: { get_resource: volume }
+      flavor: m1.small
+      key_name: CloudOperations
+      networks:
+        - port: { get_resource: port }
+  port:
+    type: OS::Neutron::Port
+    properties:
+      network: CEPH-NET1
+      security_groups:
+        - default
+        - SSH-rule
+
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: ext-net
+
+  floating_ip_assoc:
+    type: OS::Neutron::FloatingIPAssociation
+    properties:
+      floatingip_id: { get_resource: floating_ip }
+      port_id: { get_resource: port }
+
+  volume:
+    type: OS::Cinder::Volume
+    properties:
+      image: 'Ubuntu1404'
+      size: 10
